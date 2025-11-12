@@ -238,7 +238,7 @@ img = intersects.reshape(num_pixels_y, num_pixels_z).int()
 imshow(img, origin="lower", width=600, title="Triangle (as intersected by rays)")
 """
 
-# triangles = t.load(section_dir / "pikachu.pt", weights_only=True)
+triangles = t.load(section_dir / "pikachu.pt", weights_only=True)
 
 def raytrace_mesh(
     rays: Float[Tensor, "nrays rayPoints=2 dims=3"],
@@ -340,7 +340,7 @@ def display_video(distances: Float[Tensor, "frames y z"]):
         coloraxis_showscale=False, width=550, height=600, title="Raytrace mesh video"
     ).show()
 
-"""
+
 num_pixels_y = 250
 num_pixels_z = 250
 y_limit = z_limit = 0.8
@@ -348,20 +348,21 @@ num_frames = 50
 
 rays = make_rays_2d(num_pixels_y, num_pixels_z, y_limit, z_limit)
 rays[:, 0] = t.tensor([-3.0, 0.0, 0.0])
+
+"""
 dists = raytrace_mesh_video(rays, triangles, rotation_matrix, raytrace_mesh, num_frames)
 dists = einops.rearrange(dists, "frames (y z) -> frames y z", y=num_pixels_y)
-
 display_video(dists)
 """
 
+"""
 print("torch:", t.__version__, "cuda:", t.version.cuda)
 print("is_available:", t.cuda.is_available())
 print("device_count:", t.cuda.device_count())
 if t.cuda.is_available(): print(t.cuda.get_device_name(0))
 try: t.cuda.init(); print("init OK")
 except Exception as e: print("cuda init error:", e)
-
-
+"""
 
 def raytrace_mesh_gpu(
     rays: Float[Tensor, "nrays rayPoints=2 dims=3"],
@@ -399,8 +400,6 @@ def raytrace_mesh_gpu(
 
     return einops.reduce(distance, "NR NT -> NR", "min").cpu()
 
-"""
 dists = raytrace_mesh_video(rays, triangles, rotation_matrix, raytrace_mesh_gpu, num_frames)
 dists = einops.rearrange(dists, "frames (y z) -> frames y z", y=num_pixels_y)
 display_video(dists)
-""" 
