@@ -19,6 +19,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, models, transforms
 from tqdm.notebook import tqdm
+import time
 
 # Make sure exercises are in the path
 chapter = "chapter0_fundamentals"
@@ -34,6 +35,10 @@ MAIN = __name__ == "__main__"
 import part2_cnns.tests as tests
 import part2_cnns.utils as utils
 from plotly_utils import line
+
+device = t.device(
+    "mps" if t.backends.mps.is_available() else "cuda" if t.cuda.is_available() else "cpu"
+)
 
 class ReLU(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
@@ -124,5 +129,59 @@ class SimpleMLP(nn.Module):
         return self.linear2(self.relu(self.linear1(self.flatten(x))))
 
 
-tests.test_mlp_module(SimpleMLP)
-tests.test_mlp_forward(SimpleMLP)
+# tests.test_mlp_module(SimpleMLP)
+# tests.test_mlp_forward(SimpleMLP)
+
+MNIST_TRANSFORM = transforms.Compose(
+    [
+        transforms.ToTensor(),
+        transforms.Normalize(0.1307, 0.3081),
+    ]
+)
+
+
+def get_mnist(trainset_size: int = 10_000, testset_size: int = 1_000) -> tuple[Subset, Subset]:
+    """Returns a subset of MNIST training data."""
+
+    # Get original datasets, which are downloaded to "./data" for future use
+    mnist_trainset = datasets.MNIST(
+        exercises_dir / "data", train=True, download=True, transform=MNIST_TRANSFORM
+    )
+    mnist_testset = datasets.MNIST(
+        exercises_dir / "data", train=False, download=True, transform=MNIST_TRANSFORM
+    )
+
+    # # Return a subset of the original datasets
+    mnist_trainset = Subset(mnist_trainset, indices=range(trainset_size))
+    mnist_testset = Subset(mnist_testset, indices=range(testset_size))
+
+    return mnist_trainset, mnist_testset
+
+"""
+mnist_trainset, mnist_testset = get_mnist()
+mnist_trainloader = DataLoader(mnist_trainset, batch_size=64, shuffle=True)
+mnist_testloader = DataLoader(mnist_testset, batch_size=64, shuffle=False)
+
+# Get the first batch of test data, by starting to iterate over `mnist_testloader`
+for img_batch, label_batch in mnist_testloader:
+    print(f"{img_batch.shape=}\n{label_batch.shape=}\n")
+    break
+
+# Get the first datapoint in the test set, by starting to iterate over `mnist_testset`
+for img, label in mnist_testset:
+    print(f"{img.shape=}\n{label=}\n")
+    break
+
+t.testing.assert_close(img, img_batch[0])
+assert label == label_batch[0].item()
+"""
+word = "hello!"
+pbar = tqdm(enumerate(word), total=len(word))
+t0 = time.time()
+
+for i, letter in pbar:
+    time.sleep(1.0)
+    pbar.set_postfix(i=i, letter=letter, time=f"{time.time()-t0:.3f}")
+
+print(device)
+
